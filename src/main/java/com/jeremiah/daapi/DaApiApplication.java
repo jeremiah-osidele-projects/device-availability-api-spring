@@ -1,4 +1,4 @@
-package com.jeremiah.da_api;
+package com.jeremiah.daapi;
 
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
