@@ -12,5 +12,19 @@ services:
       - db-data:/var/lib/postgresql/data
     command: ["postgres", "-c", "shared_preload_libraries=pg_stat_statements"]
 
+  pgadmin:
+    image: dpage/pgadmin4
+    container_name: pgadmin-daapi
+    environment:
+      PGADMIN_DEFAULT_EMAIL: admin@admin.com
+      PGADMIN_DEFAULT_PASSWORD: admin
+    ports:
+      - "8080:80"  # Access pgAdmin in browser via http://localhost:8080
+    depends_on:
+      - db
+    volumes:
+      - pgadmin-data:/var/lib/pgadmin
+
 volumes:
   db-data:
+  pgadmin-data:

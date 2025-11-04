@@ -8,6 +8,7 @@ import java.util.UUID;
 import jakarta.persistence.*;
 
 @Entity
+@Table(name = "devices", schema = "devices_schema")
 public class Device {
 	@Id
 	@GeneratedValue
