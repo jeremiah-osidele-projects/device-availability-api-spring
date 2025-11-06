@@ -1,4 +1,4 @@
-package com.jeremiah.daapi;
+package com.jeremiah.daapi.Service;
 
 import java.util.List;
 
