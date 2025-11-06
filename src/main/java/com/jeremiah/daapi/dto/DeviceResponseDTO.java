@@ -21,7 +21,6 @@ public class DeviceResponseDTO {
     private String region;
     private DeviceStatus status;
     private String raveConfig;
-    
 }
 
 

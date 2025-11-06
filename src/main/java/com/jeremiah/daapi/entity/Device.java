@@ -1,14 +1,17 @@
 package com.jeremiah.daapi.entity;
 
-import jakarta.persistence.Entity;
-
+import jakarta.persistence.*;
+import lombok.*;
 import java.time.Instant;
 import java.util.UUID;
 
-import jakarta.persistence.*;
-
 @Entity
 @Table(name = "devices", schema = "devices_schema")
+@Getter
+@Setter
+@NoArgsConstructor
+@AllArgsConstructor
+@Builder
 public class Device {
 	@Id
 	@GeneratedValue
@@ -51,94 +54,94 @@ public class Device {
 	@Column(name = "rave_config", columnDefinition = "jsonb")
 	private String raveConfig;
 
-	// No-arg constructor (required by JPA)
-	public Device() {
-	}
-
-	// All-args constructor
-	public Device(UUID deviceId, Integer assetId, String make, String model, Integer releaseYear, String os,
-			String osVersion, String capabilities, String webdriverConfig, String region, DeviceStatus status,
-			Instant lastPolled, UUID reservationToken, String raveConfig) {
-		this.deviceId = deviceId;
-		this.assetId = assetId;
-		this.make = make;
-		this.model = model;
-		this.releaseYear = releaseYear;
-		this.os = os;
-		this.osVersion = osVersion;
-		this.capabilities = capabilities;
-		this.webdriverConfig = webdriverConfig;
-		this.region = region;
-		this.status = status;
-		this.lastPolled = lastPolled;
-		this.reservationToken = reservationToken;
-		this.raveConfig = raveConfig;
-	}
-
-	// Getters
-	public UUID getDeviceId() {
-		return deviceId;
-	}
-
-	public Integer getAssetId() {
-		return assetId;
-	}
-
-	public String getMake() {
-		return make;
-	}
-
-	public String getModel() {
-		return model;
-	}
-
-	public Integer getReleaseYear() {
-		return releaseYear;
-	}
-
-	public String getOs() {
-		return os;
-	}
-
-	public String getOsVersion() {
-		return osVersion;
-	}
-
-	public String getCapabilities() {
-		return capabilities;
-	}
-
-	public String getWebdriverConfig() {
-		return webdriverConfig;
-	}
-
-	public String getRegion() {
-		return region;
-	}
-
-	public DeviceStatus getStatus() {
-		return status;
-	}
-
-	public Instant getLastPolled() {
-		return lastPolled;
-	}
-
-	public UUID getReservationToken() {
-		return reservationToken;
-	}
-
-	public String getRaveConfig() {
-		return raveConfig;
-	}
-	
-	@Override
-    public String toString() {
-        return "Device.DeviceBuilder(deviceId=" + this.deviceId + ", assetId=" + this.assetId + ", make=" + this.make
-                + ", model=" + this.model + ", releaseYear=" + this.releaseYear + ", os=" + this.os
-                + ", osVersion=" + this.osVersion + ", capabilities=" + this.capabilities
-                + ", webdriverConfig=" + this.webdriverConfig + ", region=" + this.region
-                + ", status=" + this.status + ", lastPolled=" + this.lastPolled
-                + ", reservationToken=" + this.reservationToken + ", raveConfig=" + this.raveConfig + ")";
-    }
+//	// No-arg constructor (required by JPA)
+//	public Device() {
+//	}
+//
+//	// All-args constructor
+//	public Device(UUID deviceId, Integer assetId, String make, String model, Integer releaseYear, String os,
+//			String osVersion, String capabilities, String webdriverConfig, String region, DeviceStatus status,
+//			Instant lastPolled, UUID reservationToken, String raveConfig) {
+//		this.deviceId = deviceId;
+//		this.assetId = assetId;
+//		this.make = make;
+//		this.model = model;
+//		this.releaseYear = releaseYear;
+//		this.os = os;
+//		this.osVersion = osVersion;
+//		this.capabilities = capabilities;
+//		this.webdriverConfig = webdriverConfig;
+//		this.region = region;
+//		this.status = status;
+//		this.lastPolled = lastPolled;
+//		this.reservationToken = reservationToken;
+//		this.raveConfig = raveConfig;
+//	}
+//
+//	// Getters
+//	public UUID getDeviceId() {
+//		return deviceId;
+//	}
+//
+//	public Integer getAssetId() {
+//		return assetId;
+//	}
+//
+//	public String getMake() {
+//		return make;
+//	}
+//
+//	public String getModel() {
+//		return model;
+//	}
+//
+//	public Integer getReleaseYear() {
+//		return releaseYear;
+//	}
+//
+//	public String getOs() {
+//		return os;
+//	}
+//
+//	public String getOsVersion() {
+//		return osVersion;
+//	}
+//
+//	public String getCapabilities() {
+//		return capabilities;
+//	}
+//
+//	public String getWebdriverConfig() {
+//		return webdriverConfig;
+//	}
+//
+//	public String getRegion() {
+//		return region;
+//	}
+//
+//	public DeviceStatus getStatus() {
+//		return status;
+//	}
+//
+//	public Instant getLastPolled() {
+//		return lastPolled;
+//	}
+//
+//	public UUID getReservationToken() {
+//		return reservationToken;
+//	}
+//
+//	public String getRaveConfig() {
+//		return raveConfig;
+//	}
+//	
+//	@Override
+//    public String toString() {
+//        return "Device.DeviceBuilder(deviceId=" + this.deviceId + ", assetId=" + this.assetId + ", make=" + this.make
+//                + ", model=" + this.model + ", releaseYear=" + this.releaseYear + ", os=" + this.os
+//                + ", osVersion=" + this.osVersion + ", capabilities=" + this.capabilities
+//                + ", webdriverConfig=" + this.webdriverConfig + ", region=" + this.region
+//                + ", status=" + this.status + ", lastPolled=" + this.lastPolled
+//                + ", reservationToken=" + this.reservationToken + ", raveConfig=" + this.raveConfig + ")";
+//    }
 }
