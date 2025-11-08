@@ -1,0 +1,165 @@
+# This file (.github/workflows/ci-cd.yml) tells GitHub Actions how to automatically build, test, and package code every time I push to the repo.
+# When code changes, spin up a clean Linux machine, check out my repo, install Java, build with Maven, run tests, then build and push a Docker image.
+name: CI/CD
+
+# Run this workflow on push new code to the main branch or on open/update a pull request targeting main.
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+# All the automation steps live under “jobs”.
+# Each job runs independently (in a fresh virtual machine called a runner).
+jobs:
+# Build Spring Boot project and run tests
+# Uses a Linux Virtual Machine (Ubuntu)
+# DO I HAVE ACCESS TO THE VM? E.G. TO LOG IN AND SEE THE DIRETORY...
+  build-and-test:
+    runs-on: ubuntu-latest
+    strategy:
+      # A matrix lets us run the same job on multiple versions or configurations.
+      # If I listed multiple versions (e.g., [17, 21]), it would run one job for each version.
+      matrix:
+        java: [17]
+
+    steps:
+      # Every GitHub Action job starts in a blank machine — it doesn’t have the code yet.
+      # This step downloads the repo into the runner using Git. Like cloning the repo
+      # uses: means “use a prebuilt GitHub Action” (in this case, actions/checkout version 4).
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      # This installs the Java Development Kit (JDK 17) on the virtual machine.
+      # temurin is the OpenJDK distribution maintained by the Eclipse Foundation (formerly AdoptOpenJDK).
+      # ${{ matrix.java }} means “insert the Java version defined earlier in the matrix”.
+      # So far, I've got a Ubuntu machine with the code and Java 17 installed.
+      # If I had [17, 21], two runners would run in parallel — one with JDK 17, one with JDK 21.
+      - name: Set up JDK ${{ matrix.java }}
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: ${{ matrix.java }}
+
+      # Maven downloads dependencies (JARs) into a folder called .m2.
+      # WHERE IS THIS FOLDER?
+      # Without caching, it would re-download them every time, which is slow.
+      # So this step caches them between builds to speed things up.
+      # If dependencies haven’t changed, reuse them instead of redownloading.
+      #   path: ~/.m2 → folder to cache.
+      #   key: a unique identifier for the cache (changes when pom.xml changes).
+      #   restore-keys: → fallback keys if an exact match isn’t found.
+      - name: Cache Maven local repository
+        uses: actions/cache@v4
+        with:
+          path: ~/.m2
+          # Key is like a version label for the cache.
+          #   runner.os > Ubuntu
+          #   hashFiles('**/pom.xml') > checksum of all pom.xml 
+          #   If the pom.xml changes (new dependency), the hash changes, and a new cache is created.
+          key: ${{ runner.os }}-maven-${{ hashFiles('**/pom.xml') }} 
+          restore-keys: |
+            ${{ runner.os }}-maven-
+
+      - name: Build & run tests
+        env:
+          # Allow tests to pick up DB creds if they require; testcontainers will create its own container.
+          # In Spring Boot, profiles let you load different config sets (e.g., application-dev.yml, application-test.yml, etc.).
+          # SPRING_PROFILES_ACTIVE
+          #   When this variable is set, Spring loads the application-test.yml config 
+          #   for example, using a test database or mocks.
+          SPRING_PROFILES_ACTIVE: test
+        run: mvn -B -DskipTests=false test package
+          # mvn runs Maven commands.
+          # -B → batch mode (no interactive prompts).
+          # -DskipTests=false → ensures tests are run.
+          # test package = run tests then package the app (into a JAR file).
+
+  # Build a Docker image and push it to the GitHub Container Registry (GHCR)
+  # Dependent on build-and-test job succeeding first, to ensure only code that has been tested gets packaged into Docker image
+  # Again, Uses a Linux Virtual Machine (Ubuntu)
+  build-and-push-image:
+    needs: build-and-test
+    runs-on: ubuntu-latest
+    # The if: line ensures this job only runs on the main branch, not for pull requests.
+    # Typically only want “official” images for production-ready code (main branch)
+    if: github.ref == 'refs/heads/main'
+    permissions:
+      contents: read
+      packages: write
+      packages: read
+      id-token: write
+      # These are security permissions the job is granted.
+      # It needs permission to:
+      # Read repo contents (code base).
+      # Write/read container packages (images). Refering to githubs package registry
+      # Authenticate securely (id-token). Refering to authentication token (OIDC) to securely log in to registries.
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up JDK
+        uses: actions/setup-java@v4
+        with:
+          java-version: 17
+          distribution: temurin
+
+      # GHCR = GitHub Container Registry.
+      # A built-in Docker image registry at ghcr.io.
+      # Similar to Docker Hub, but integrated into GitHub.
+      # Anyone with repo access can view or pull images.
+      # Standard practice:
+      #   Each repo/team uses one GHCR registry (not each developer).
+      #   The GITHUB_TOKEN secret authenticates automatically.
+      - name: Login to GitHub Container Registry
+        uses: docker/login-action@v2
+        with:
+          registry: ghcr.io # A built-in Docker image registry
+          username: ${{ github.actor }} # username of whoever triggered the workflow.
+          password: ${{ secrets.GITHUB_TOKEN }} # GitHub automatically generates for each workflow run
+
+      # This will build the app store it as a Docker image (container) in the GitHub registry.
+      - name: Build and push Docker image
+        # uses: again means "use a published GitHub Action" (in this case, Docker’s official one).
+        uses: docker/build-push-action@v4
+        with:
+          context: . # use current directory as the build context (the files Docker needs).
+          push: true
+          tags: ghcr.io/${{ github.repository_owner }}/da-api:${{ github.sha }}
+          file: ./Dockerfile
+
+      # Pull the just-pushed image.
+      # Re-tag it as latest (so there’s always an easy-to-reference version).
+      # Push the latest tag.
+      # This is a convention — many deployment systems pull :latest automatically.
+      - name: Create 'latest' tag in GHCR
+        run: |
+          echo "Tagging image as latest"
+          docker pull ghcr.io/${{ github.repository_owner }}/da-api:${{ github.sha }}
+          docker tag ghcr.io/${{ github.repository_owner }}/da-api:${{ github.sha }} ghcr.io/${{ github.repository_owner }}/da-api:latest
+          docker push ghcr.io/${{ github.repository_owner }}/da-api:latest
+        env:
+          DOCKER_USERNAME: ${{ github.actor }}
+          DOCKER_PASSWORD: ${{ secrets.GITHUB_TOKEN }}
+
+
+# **** NOTE: 
+# These are Environment Variables
+#     ${{ github.sha }} > current commit ID.
+#     ${{ github.actor }} > user who triggered the workflow.
+#     ${{ secrets.GITHUB_TOKEN }} > secret token provided securely.
+#     ${{ matrix.java }} > Java version from matrix.
+#     ${{ runner.os }} > name of the OS (Ubuntu, etc.)
+# These are all GitHub context variables. They come from GitHub Contexts — built-in objects GitHub provides during the workflow
+#   like predefined variables populated automatically at runtime.
+# values that GitHub makes available during workflow execution.
+
+
+# Real-world analogy
+#   Imagine your GitHub Actions workflow as a factory assembly line:
+#   Worker 1 (Job 1)
+#   Assembles product parts → tests → marks them “approved”.
+#   Worker 2 (Job 2)
+#   Takes approved parts → packs into containers (Docker images) → ships them to the warehouse (registry).
+#   If step 1 fails, step 2 never starts. That’s CI/CD discipline in action.
