@@ -1,0 +1,11 @@
+spring:
+  jpa:
+    hibernate:
+      ddl-auto: create-drop
+  datasource:
+    driver-class-name: org.postgresql.Driver
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info
