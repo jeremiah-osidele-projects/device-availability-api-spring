@@ -5,16 +5,16 @@ name: CI/CD
 # Run this workflow on push new code to the main branch or on open/update a pull request targeting main.
 on:
   push:
-    branches: [ main ]
+    branches: [main]
   pull_request:
-    branches: [ main ]
+    branches: [main]
 
 # All the automation steps live under “jobs”.
 # Each job runs independently (in a fresh virtual machine called a runner).
 jobs:
-# Build Spring Boot project and run tests
-# Uses a Linux Virtual Machine (Ubuntu)
-# DO I HAVE ACCESS TO THE VM? E.G. TO LOG IN AND SEE THE DIRETORY...
+  # Build Spring Boot project and run tests
+  # Uses a Linux Virtual Machine (Ubuntu)
+  # DO I HAVE ACCESS TO THE VM? E.G. TO LOG IN AND SEE THE DIRETORY...
   build-and-test:
     runs-on: ubuntu-latest
     strategy:
@@ -55,9 +55,9 @@ jobs:
           path: ~/.m2
           # Key is like a version label for the cache.
           #   runner.os > Ubuntu
-          #   hashFiles('**/pom.xml') > checksum of all pom.xml 
+          #   hashFiles('**/pom.xml') > checksum of all pom.xml
           #   If the pom.xml changes (new dependency), the hash changes, and a new cache is created.
-          key: ${{ runner.os }}-maven-${{ hashFiles('**/pom.xml') }} 
+          key: ${{ runner.os }}-maven-${{ hashFiles('**/pom.xml') }}
           restore-keys: |
             ${{ runner.os }}-maven-
 
@@ -66,10 +66,11 @@ jobs:
           # Allow tests to pick up DB creds if they require; testcontainers will create its own container.
           # In Spring Boot, profiles let you load different config sets (e.g., application-dev.yml, application-test.yml, etc.).
           # SPRING_PROFILES_ACTIVE
-          #   When this variable is set, Spring loads the application-test.yml config 
+          #   When this variable is set, Spring loads the application-test.yml config
           #   for example, using a test database or mocks.
           SPRING_PROFILES_ACTIVE: test
-        run: mvn -B -DskipTests=false test package
+        run:
+          mvn -B -DskipTests=false test package
           # mvn runs Maven commands.
           # -B → batch mode (no interactive prompts).
           # -DskipTests=false → ensures tests are run.
@@ -87,7 +88,6 @@ jobs:
     permissions:
       contents: read
       packages: write
-      packages: read
       id-token: write
       # These are security permissions the job is granted.
       # It needs permission to:
@@ -142,9 +142,7 @@ jobs:
         env:
           DOCKER_USERNAME: ${{ github.actor }}
           DOCKER_PASSWORD: ${{ secrets.GITHUB_TOKEN }}
-
-
-# **** NOTE: 
+# **** NOTE:
 # These are Environment Variables
 #     ${{ github.sha }} > current commit ID.
 #     ${{ github.actor }} > user who triggered the workflow.
@@ -154,7 +152,6 @@ jobs:
 # These are all GitHub context variables. They come from GitHub Contexts — built-in objects GitHub provides during the workflow
 #   like predefined variables populated automatically at runtime.
 # values that GitHub makes available during workflow execution.
-
 
 # Real-world analogy
 #   Imagine your GitHub Actions workflow as a factory assembly line:
